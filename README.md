@@ -1,3 +1,1 @@
-# AutoAL
-
-AUTOAL: AUTOMATED ACTIVE LEARNING WITH DIFFERENTIABLE QUERY STRATEGY SEARCH
+# AutoAL: Automated Active Learning with Differentiable Query Strategy Search
