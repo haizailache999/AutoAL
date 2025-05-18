@@ -4,7 +4,13 @@
 
 **[AutoAL: Automated Active Learning with Differentiable Query Strategy Search](https://arxiv.org/abs/2410.13853)**
 
-[Yifeng Wang](https://haizailache999.github.io/yifeng.github.io/), [Xueying Zhan](https://sinezhan.github.io/index.html), [Siyu Huang](https://siyuhuang.github.io/)
+<p align="center">
+  <a href="https://haizailache999.github.io/yifeng.github.io/">Yifeng Wang</a> <img src="./assets/cmu.png" height="20px">
+  &nbsp;&nbsp;
+  <a href="https://sinezhan.github.io/index.html">Xueying Zhan</a> <img src="./assets/cmu.png" height="20px">
+  &nbsp;&nbsp;
+  <a href="https://siyuhuang.github.io/">Siyu Huang</a> <img src="./assets/clemson.png" height="20px">
+</p>
 
 [![arXiv](https://img.shields.io/badge/arXiv-2410.13853-b31b1b.svg?logo=arXiv)](https://arxiv.org/abs/2410.13853)
 
@@ -12,91 +18,68 @@
 
 
 </h4>
-<p>
-    <img width="730" src="./assets/method.png">
+<p align="center">
+  <img width="730" src="./assets/AutoAL_FRAME-1.png">
 </p>
 
-**We propose a 3D-aware 2D VAE that enables 3D reconstruction in the 2D latent space**. We present a three-stage pipeline to enhance the 3D awareness of both encoder and decoder of the VAE.
+**We propose the first automatic AL query strategy search method that can be trained in a differientiable way**. 
 
-Feel free to contact me, [Chaoyi Zhou](https://chaoyizh.github.io/chaoyizh-home-page/) or open an issue if you have any questions or suggestions.
+Feel free to contact me, [yifengw3@andrew.cmu.edu](https://haizailache999.github.io/yifeng.github.io/) or open an issue if you have any questions or suggestions.
 
 
 ## 📢 News
-- **2025-02-14**: Training, rendering, and evalution codes are released!
-- **2025-01-22**: Latent Radiance Fields with 3D-aware 2D Representations is accepted to ICLR 2025.
+- **2025-05-20**: AutoAL is accepted to ICML 2025, the code has been released!
 
 
 
 ## 📋 TODO
 
-- [x] Release the code for Latent Radiance Fields.
-- [ ] Release the code for 3D-aware fine-tuning.
 
 
 
 ## 🔧 Installation
 
 ```bash
-git clone https://github.com/ChaoyiZh/latent-radiance-field.git
-cd latent-radiance-field
-conda create --name lrf python=3.8
-conda activate lrf
-```
-PyTorch (Please check your CUDA version, we used 11.8)
-```bash
-pip install torch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 --index-url https://download.pytorch.org/whl/cu118
-```
-Required packages
-```bash
-pip install -r requirements.txt
+git clone https://github.com/haizailache999/AutoAL.git
+cd AutoAL
+conda env create -f environment.yml -n AutoAL
+conda activate AutoAL
 ```
 
-## 🦾 LRF training, rendering, and evaluation
+## 🦾 AutoAL training and evaluation
 ### Dataset
-We follow the same dataset logistics for [3D Gaussian Splatting](https://github.com/graphdeco-inria/gaussian-splatting). COLMAP loaders expect the following dataset structure in the source path location:
-```bash
-<location>
-|---images
-|   |---<image 0>
-|   |---<image 1>
-|   |---...
-|---images_2
-|   |---...
-|---images_4
-|   |---...
-|---images_8
-|   |---...
-|---sparse
-    |---0
-        |---cameras.bin
-        |---images.bin
-        |---points3D.bin
-```
-For the dataset we used in our paper. Please refer to [MipNeRF 360](https://jonbarron.info/mipnerf360/),[DL3DV-10K](https://dl3dv-10k.github.io/DL3DV-10K/), [NeRF-LLFF](https://www.kaggle.com/datasets/arenagrenade/llff-dataset-full/data), and [MVImgNet](https://github.com/GAP-LAB-CUHK-SZ/MVImgNet).
+Please refer to arguments.py, you need to config your own dataset_name, possible choices are shown in parameters.py.
+For the dataset we used in our paper, please refer to [CIFAR 10 and CIFAR 100](https://www.cs.toronto.edu/~kriz/cifar.html), [SVHN](https://docs.pytorch.org/vision/main/generated/torchvision.datasets.SVHN.html), [TinyImageNet](https://huggingface.co/datasets/zh-plus/tiny-imagenet), and [MedMNIST](https://medmnist.com/).
 
-### Pretrained Models
-The pretrained models of 3D aware VAE is available at [HuggingFace🤗](https://huggingface.co/chaoyizh/LRF).
-###
 ### Training
+Before start training, please following the checklists to config your training:
+
+1. Go to parameters.py, choose the dataset, and config some network parameters.
+2. Go to arguments.py, config the training parameters. Some important parameters:
+   ```yaml
+   ALstrategy: RandomSampling (Must be a strategy included in query_strategies/__init__.py. No matter which to choose won't effect the code running but just the final output file name, can simply use RandomSampling as a test.)
+   quota: Final AL strategy acquired numbers.
+   batch: In each AL round, how many new images to acquire. The nubmer of AL rounds will be quota/batch.
+   initseed: The original random sampled size. The size of final labeled data will be initseed+quota
+   dataset_name: Which dataset to use. The name is from parameters.py.
+   ratio: Equals to batch/total training size of the dataset. (i.e. CIFAR10 and CIFAR100 is 50000 for the total training size.)
+3. Go to demo_final.py, in line 150, change the range of q_number to the total training size of the dataset.
+   
+Then you are good to run:
 ```bash
-cd gaussian-splatting
-python train.py -s data/DATASET_NAME -m output/OUTPUT_NAME -i images_8 --ae_model VAE --ckpt_path path/to/ckpt --cfg_path config/config.yaml --eval --convert_SHs_python
+python3 demo_final.py
 ```
-### Rendering
-```bash
-python render.py -s data/DATASET_NAME -m output/OUTPUT_NAME --convert_SHs_python --full_render
-```
+The final result will be recorded in result/ folder.
+
 ### Evluataion
-```bash
-python metrics.py -s data/DATASET_NAME -m output/OUTPUT_NAME
-```
+Please refer to the toolbox of [deepAL](https://github.com/SineZHAN/deepALplus) for baselines.
 ## 📚 Citation
 If you find our work helpful, please consider citing:
 ```bibtex
-@inproceedings{zhou2025lrf,
-  title={Latent Radiance Fields with 3D-Aware 2D Representations},
-  author={Zhou, Chaoyi and Liu, Xi and Luo, Feng and Huang, Siyu},
-  booktitle={International Conference on Learning Representations (ICLR)},
-  year={2025}
+@article{wang2024autoal,
+  title={AutoAL: Automated Active Learning with Differentiable Query Strategy Search},
+  author={Wang, Yifeng and Zhan, Xueying and Huang, Siyu},
+  journal={arXiv preprint arXiv:2410.13853},
+  year={2024}
 }
 ```
